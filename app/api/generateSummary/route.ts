@@ -26,6 +26,6 @@ export const POST = async (request: Request) => {
 
     return NextResponse.json(response.data.choices[0].message);
   } catch (error) {
-    return { content: "No Money in Bank..." };
+    return NextResponse.json({ content: "No Money in Bank..." });
   }
 };
