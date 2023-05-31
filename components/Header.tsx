@@ -30,7 +30,7 @@ const Header = (props: Props) => {
               Search
             </button>
           </form>
-          <Avatar name="Jonak" round color="#0055D1" size="50" />
+          <Avatar name="Jonak Adipta Kalita" round color="#0055D1" size="50" />
         </div>
       </div>
       <div className="flex items-center justify-center px-5 py-2 md:py-5">
