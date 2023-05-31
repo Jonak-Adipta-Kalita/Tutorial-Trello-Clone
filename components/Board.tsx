@@ -12,7 +12,7 @@ import Column from "./Column";
 type Props = {};
 
 const Board = (props: Props) => {
-  const { setBoardState, getBoard, board } = useBoardStore();
+  const { setBoardState, getBoard, updateTodoInDB, board } = useBoardStore();
 
   useEffect(() => {
     getBoard();
@@ -87,7 +87,7 @@ const Board = (props: Props) => {
           todos: finishTodos,
         });
 
-        // TODO: Update in DB
+        updateTodoInDB(todoMoved, endCol.id);
 
         setBoardState({
           ...board,
