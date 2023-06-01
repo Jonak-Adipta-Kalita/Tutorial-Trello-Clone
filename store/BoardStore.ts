@@ -1,5 +1,6 @@
-import { databases, storage } from "@/appwrite";
+import { ID, databases, storage } from "@/appwrite";
 import { getTodosGroupedByColumns } from "@/utils/getTodosGroupedByColumns";
+import { uploadImage } from "@/utils/uploadImage";
 import { create } from "zustand";
 
 interface BoardState {
@@ -14,6 +15,9 @@ interface BoardState {
   setNewTaskInput: (newTaskInput: string) => void;
   newTaskType: TypedColumn;
   setNewTaskType: (newTaskType: TypedColumn) => void;
+  image: File | null;
+  setImage: (image: File | null) => void;
+  addTask: (todo: string, columnId: TypedColumn, image: File | null) => void;
 }
 
 const useBoardStore = create<BoardState>((set, get) => ({
@@ -50,7 +54,7 @@ const useBoardStore = create<BoardState>((set, get) => ({
     });
 
     if (todo.image) {
-      await storage.deleteFile(todo.image.buckedId, todo.image.fildId);
+      await storage.deleteFile(todo.image.buckedId, todo.image.fileId);
     }
 
     await databases.deleteDocument(
@@ -63,6 +67,63 @@ const useBoardStore = create<BoardState>((set, get) => ({
   setNewTaskInput: (newTaskInput) => set({ newTaskInput }),
   newTaskType: "todo",
   setNewTaskType: (newTaskType) => set({ newTaskType }),
+  image: null,
+  setImage: (image) => set({ image }),
+  addTask: async (todo, columnId, image) => {
+    let file: Image | undefined;
+
+    if (image) {
+      const fileUploaded = await uploadImage(image);
+      if (fileUploaded) {
+        file = {
+          buckedId: fileUploaded.bucketId,
+          fileId: fileUploaded.$id,
+        };
+      }
+    }
+
+    const { $id } = await databases.createDocument(
+      process.env.NEXT_PUBLIC_DATABASE_ID!,
+      process.env.NEXT_PUBLIC_TODOS_COLLECTION_ID!,
+      ID.unique(),
+      {
+        title: todo,
+        status: columnId,
+        ...(file && { image: JSON.stringify(file) }),
+      }
+    );
+
+    set({ newTaskInput: "" });
+
+    set((state) => {
+      const newColumns = new Map(state.board.columns);
+
+      const newTodo: Todo = {
+        $id,
+        $createdAt: new Date().toISOString(),
+        title: todo,
+        status: columnId,
+        ...(file && { image: file }),
+      };
+
+      const column = newColumns.get(columnId);
+
+      if (!column) {
+        newColumns.set(columnId, {
+          id: columnId,
+          todos: [newTodo],
+        });
+      } else {
+        column.todos.push(newTodo);
+      }
+
+      return {
+        board: {
+          columns: newColumns,
+        },
+      };
+    });
+  },
 }));
 
 export { useBoardStore };

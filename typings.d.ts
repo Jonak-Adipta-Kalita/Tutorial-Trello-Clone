@@ -19,5 +19,5 @@ interface Todo {
 
 interface Image {
   buckedId: string;
-  fildId: string;
+  fileId: string;
 }
